@@ -1,0 +1,6 @@
+[
+  { "id": 1, "nombre": "Corrientes Capital", "departamento": "Capital", "lat": -27.4676, "lng": -58.8344, "precipitacion": 10.2, "fecha": "2025-06-15T14:30:00", "acumuladoMes": 55.2, "acumuladoAnio": 320.7 },
+  { "id": 2, "nombre": "Goya Centro", "departamento": "Goya", "lat": -29.1417, "lng": -59.2644, "precipitacion": 5.0, "fecha": "2025-06-15T13:15:00", "acumuladoMes": 33.5, "acumuladoAnio": 250.0 },
+  { "id": 3, "nombre": "Mercedes Oeste", "departamento": "Mercedes", "lat": -29.1833, "lng": -58.0833, "precipitacion": 0.0, "fecha": "2025-06-15T12:00:00", "acumuladoMes": 70.1, "acumuladoAnio": 410.3 },
+  { "id": 10, "nombre": "Aeropuerto Ctes", "departamento": "Capital", "lat": -27.4455, "lng": -58.7612, "precipitacion": 12.8, "fecha": "2025-06-15T15:00:00", "acumuladoMes": 60.0, "acumuladoAnio": 330.5 }
+]

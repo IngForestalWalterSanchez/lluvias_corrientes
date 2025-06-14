@@ -1,0 +1,1091 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Precipitaciones - Provincia de Corrientes</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.css" />
+    <style>
+        /* Estilos CSS (sin cambios) */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+
+        .header {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            padding: 1rem 2rem;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .header h1 {
+            color: #2c3e50;
+            font-size: 1.8rem;
+            font-weight: 700;
+        }
+
+        .controls {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            padding: 0.5rem 1rem;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .btn:disabled {
+            cursor: not-allowed;
+            opacity: 0.7;
+        }
+
+        .btn-primary {
+            background: linear-gradient(45deg, #3498db, #2980b9);
+            color: white;
+        }
+
+        .btn-success {
+            background: linear-gradient(45deg, #27ae60, #229954);
+            color: white;
+        }
+
+        .btn-warning {
+            background: linear-gradient(45deg, #f39c12, #e67e22);
+            color: white;
+        }
+
+        .btn-danger {
+            background: linear-gradient(45deg, #e74c3c, #c0392b);
+            color: white;
+        }
+
+        .btn-info {
+            background: linear-gradient(45deg, #17a2b8, #138496);
+            color: white;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        .container {
+            display: flex;
+            height: calc(100vh - 80px); 
+            gap: 1rem;
+            padding: 1rem;
+        }
+
+        .map-container {
+            flex: 1;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            overflow: hidden;
+            position: relative;
+        }
+
+        #map {
+            height: 100%;
+            width: 100%;
+        }
+
+        .sidebar {
+            width: 350px;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            padding: 1.5rem;
+            overflow-y: auto;
+            transition: all 0.3s ease;
+        }
+
+        .sidebar.hidden {
+            display: none;
+        }
+
+        .sidebar h3 {
+            color: #2c3e50;
+            margin-bottom: 1rem;
+            font-size: 1.3rem;
+        }
+
+        .form-group {
+            margin-bottom: 1rem;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            color: #34495e;
+            font-weight: 600;
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 0.75rem;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: border-color 0.3s ease;
+        }
+
+        .form-control:focus {
+            outline: none;
+            border-color: #3498db;
+            box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.1);
+        }
+
+        .file-input-wrapper {
+            position: relative;
+            display: inline-block;
+            width: 100%;
+        }
+
+        .file-input {
+            position: absolute;
+            opacity: 0;
+            width: 100%;
+            height: 100%;
+            cursor: pointer;
+        }
+
+        .file-input-button {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            padding: 0.75rem;
+            background: #f8f9fa;
+            border: 2px dashed #ddd;
+            border-radius: 8px;
+            color: #666;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .file-input-button:hover {
+            border-color: #3498db;
+            background: #e3f2fd;
+        }
+
+        .stations-list {
+            max-height: 400px;
+            overflow-y: auto;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            background: #f8f9fa;
+        }
+
+        .station-item {
+            padding: 1rem;
+            border-bottom: 1px solid #eee;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .station-item:hover {
+            background-color: #e3f2fd;
+        }
+
+        .station-item:last-child {
+            border-bottom: none;
+        }
+
+        .station-info {
+            flex: 1;
+        }
+
+        .station-name {
+            font-weight: 600;
+            color: #2c3e50;
+        }
+
+        .station-dept {
+            font-size: 0.9rem;
+            color: #7f8c8d;
+        }
+
+        .station-precipitation {
+            font-weight: 700;
+            color: #27ae60;
+            font-size: 1.1rem;
+        }
+
+        .legend {
+            position: absolute;
+            bottom: 20px;
+            right: 20px;
+            background: rgba(255, 255, 255, 0.95);
+            padding: 1rem;
+            border-radius: 8px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+            z-index: 1000;
+        }
+
+        .legend h4 {
+            margin-bottom: 0.5rem;
+            color: #2c3e50;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: 0.3rem;
+        }
+
+        .legend-color {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            border: 2px solid #fff;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 2000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(5px);
+        }
+
+        .modal-content {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: white;
+            padding: 2rem;
+            border-radius: 15px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            width: 90%;
+            max-width: 500px;
+        }
+
+        .modal-content-large {
+            max-width: 90%;
+            max-height: 90%;
+            overflow-y: auto;
+        }
+
+        .close {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+            line-height: 1;
+        }
+
+        .close:hover {
+            color: #000;
+        }
+
+        .info-panel {
+            background: rgba(255, 255, 255, 0.95);
+            padding: 1rem;
+            border-radius: 10px;
+            margin-bottom: 1rem;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .weather-icon {
+            font-size: 2rem;
+            margin-right: 0.5rem;
+        }
+
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 1rem;
+            background: white;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .data-table th,
+        .data-table td {
+            padding: 0.75rem;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+
+        .data-table th {
+            background: #f8f9fa;
+            font-weight: 600;
+            color: #2c3e50;
+            white-space: nowrap;
+        }
+
+        .data-table tr:hover {
+            background-color: #f8f9fa;
+        }
+
+        .data-table input, .data-table select { 
+            width: 100%;
+            padding: 0.25rem;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 0.9rem;
+        }
+
+        .btn-sm {
+            padding: 0.25rem 0.5rem;
+            font-size: 0.8rem;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 2rem;
+            color: #666;
+        }
+
+        .loading.show {
+            display: block;
+        }
+
+        .success-message {
+            background: #d4edda;
+            color: #155724;
+            padding: 0.75rem;
+            border-radius: 4px;
+            margin-bottom: 1rem;
+            border: 1px solid #c3e6cb;
+        }
+
+        .error-message {
+            background: #f8d7da;
+            color: #721c24;
+            padding: 0.75rem;
+            border-radius: 4px;
+            margin-bottom: 1rem;
+            border: 1px solid #f5c6cb;
+        }
+        
+        .department-average-summary-control {
+            background: rgba(255, 255, 255, 0.92);
+            padding: 10px;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+            max-height: 60vh;
+            overflow-y: auto;
+            width: 380px;
+            font-size: 11px;
+        }
+        .department-average-summary-control h4 {
+            margin-top: 0;
+            margin-bottom: 8px;
+            font-size: 14px;
+            color: #2c3e50;
+            border-bottom: 1px solid #ccc;
+            padding-bottom: 5px;
+            text-align: center;
+        }
+        .department-average-summary-control table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        .department-average-summary-control th, 
+        .department-average-summary-control td {
+            border: 1px solid #ddd;
+            padding: 4px;
+            text-align: left;
+            white-space: nowrap;
+        }
+        .department-average-summary-control th {
+            background-color: #e9ecef;
+            color: #495057;
+            font-weight: bold;
+        }
+        .department-average-summary-control td:not(:first-child) {
+            text-align: right;
+        }
+        .department-average-summary-control .no-data {
+            text-align: center;
+            color: #666;
+            padding: 10px;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                flex-direction: column;
+                height: auto;
+            }
+            .sidebar { width: 100%; order: -1; }
+            .map-container { height: 400px; }
+            .data-table { font-size: 0.8rem; }
+            .data-table th, .data-table td { padding: 0.5rem; }
+            .header h1 { font-size: 1.5rem; }
+            .controls { justify-content: center; }
+            .department-average-summary-control {
+                max-height: 35vh; 
+                width: auto; 
+                max-width: 95%;
+                right: 10px; 
+                left: 10px;
+                bottom: 60px; 
+                top: auto;
+                font-size: 10px;
+            }
+            .department-average-summary-control th, 
+            .department-average-summary-control td {
+                 padding: 3px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+    <!-- Contenedor para alinear el logo y el título -->
+    <div style="display: flex; align-items: center; gap: 20px;">
+        
+        <!-- ========================================================= -->
+        <!--  ESTA ES LA LÍNEA CORRECTA. ÚSALA ASÍ.                   -->
+        <!--  Funciona porque la imagen está en la misma carpeta.    -->
+        <!-- ========================================================= -->
+        <img id="headerLogo" 
+             src="MEMBRETE_PROVINCIA.PNG" 
+             alt="Membrete Oficial" 
+             style="height: 70px; width: auto;">
+        
+        <h1>🌧️ Sistema de Precipitaciones - Corrientes</h1>
+    </div>
+
+    <!-- Controles -->
+    <div class="controls">
+        <button class="btn btn-primary" onclick="toggleView()"><span id="viewToggleText">⚙️ Vista Admin</span></button>
+        <button class="btn btn-success" onclick="refreshData()">🔄 Actualizar</button>
+        <button class="btn btn-info" onclick="showDataTable()">📊 Ver Tabla</button>
+        <button class="btn btn-warning" onclick="exportData()">📄 Exportar CSV</button>
+        <!-- No olvides que este botón debe llamar a la nueva función de PDF -->
+        <button class="btn btn-danger" id="exportPdfBtn" onclick="exportToPDF('map', this)">📄 Exportar PDF Mapa</button>
+    </div>
+</header>
+
+
+    <div class="container">
+        <div class="map-container">
+            <div id="map"></div>
+            <div class="legend">
+                <h4>Precipitaciones (mm)</h4>
+                <div class="legend-item"><div class="legend-color" style="background-color: #e74c3c;"></div><span>0-10mm</span></div>
+                <div class="legend-item"><div class="legend-color" style="background-color: #f39c12;"></div><span>10-25mm</span></div>
+                <div class="legend-item"><div class="legend-color" style="background-color: #f1c40f;"></div><span>25-50mm</span></div>
+                <div class="legend-item"><div class="legend-color" style="background-color: #27ae60;"></div><span>50-100mm</span></div>
+                <div class="legend-item"><div class="legend-color" style="background-color: #3498db;"></div><span>>100mm</span></div>
+            </div>
+        </div>
+
+        <div class="sidebar" id="sidebar">
+            <div id="publicView">
+                <h3>📊 Información General</h3>
+                <div class="info-panel">
+                    <div style="display: flex; align-items: center;">
+                        <span class="weather-icon">🌧️</span>
+                        <div><strong>Última actualización:</strong><br><span id="lastUpdate">Cargando...</span></div>
+                    </div>
+                </div>
+                <h3>🗺️ Estaciones Meteorológicas</h3>
+                <div class="stations-list" id="stationsList"></div>
+            </div>
+
+            <div id="adminView" style="display: none;">
+                <h3>⚙️ Panel de Administración</h3>
+                <div class="form-group">
+                    <label for="excelFile">📋 Cargar archivo Excel (.xls/.xlsx):</label>
+                    <div class="file-input-wrapper">
+                        <input type="file" id="excelFile" class="file-input" accept=".xls,.xlsx" onchange="handleFileUpload(event)">
+                        <div class="file-input-button">📁 Seleccionar archivo Excel</div>
+                    </div>
+                     <small>Columnas: ID, Precipitacion, Fecha, AcumuladoMensual, AcumuladoAnual.</small>
+                </div>
+                <div class="form-group">
+                    <label for="stationSelect">Seleccionar Estación:</label>
+                    <select class="form-control" id="stationSelect"><option value="">Seleccione una estación...</option></select>
+                </div>
+                <div class="form-group">
+                    <label for="precipitationInput">Precipitación Puntual (mm):</label>
+                    <input type="number" class="form-control" id="precipitationInput" placeholder="Precip. del evento" min="0" step="0.1">
+                </div>
+                <div class="form-group">
+                    <label for="dateInput">Fecha de Medición (evento):</label>
+                    <input type="datetime-local" class="form-control" id="dateInput">
+                </div>
+                <button class="btn btn-success" onclick="updatePrecipitation()" style="width: 100%; margin-bottom: 1rem;">💾 Actualizar Precipitación</button>
+                <button class="btn btn-primary" onclick="addNewStation()" style="width: 100%;">➕ Agregar Nueva Estación</button>
+                <div id="uploadStatus" style="margin-top: 1rem;"></div>
+            </div>
+        </div>
+    </div>
+
+    <div id="newStationModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeModal('newStationModal')">&times;</span>
+            <h3>➕ Agregar Nueva Estación</h3>
+            <div class="form-group"><label for="newStationId">ID Estación (único):</label><input type="number" class="form-control" id="newStationId" placeholder="Ej: 101"></div>
+            <div class="form-group"><label for="newStationName">Nombre Estación:</label><input type="text" class="form-control" id="newStationName" placeholder="Ej: Estación Mercedes"></div>
+            <div class="form-group"><label for="newStationDept">Departamento:</label><select class="form-control" id="newStationDept"><option value="">Seleccione...</option></select></div>
+            <div class="form-group"><label for="newStationLat">Latitud:</label><input type="number" class="form-control" id="newStationLat" placeholder="-29.1234" step="0.0001"></div>
+            <div class="form-group"><label for="newStationLng">Longitud:</label><input type="number" class="form-control" id="newStationLng" placeholder="-58.1234" step="0.0001"></div>
+            <button class="btn btn-success" onclick="saveNewStation()" style="width: 100%;">💾 Guardar Estación</button>
+        </div>
+    </div>
+
+    <div id="dataTableModal" class="modal">
+        <div class="modal-content modal-content-large">
+            <span class="close" onclick="closeModal('dataTableModal')">&times;</span>
+            <h3>📊 Tabla de Datos de Precipitaciones</h3>
+            <div style="margin-bottom: 1rem;">
+                <button id="saveTableChangesBtn" class="btn btn-success btn-sm" onclick="saveTableChanges()">💾 Guardar Cambios</button>
+                <button class="btn btn-warning btn-sm" onclick="exportData()">📄 Exportar CSV</button>
+                <button class="btn btn-danger btn-sm" onclick="exportToPDF(this)">📄 Exportar PDF</button>
+            </div>
+            <div class="loading" id="tableLoading"><p>Cargando datos...</p></div>
+            <div id="tableContainer" style="overflow-x: auto;"> 
+                <table class="data-table" id="precipitationTable">
+                    <thead><tr></tr></thead>
+                    <tbody id="tableBody"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <div id="passwordModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeModal('passwordModal')">&times;</span>
+            <h3>🔑 Acceso de Administrador</h3>
+            <p style="margin-bottom: 1rem; color: #666;">Por favor, ingrese la contraseña para continuar.</p>
+            <div class="form-group">
+                <label for="passwordInput">Contraseña:</label>
+                <input type="password" class="form-control" id="passwordInput" onkeyup="if(event.key==='Enter') checkPassword()">
+            </div>
+            <div id="passwordError" style="color: #c0392b; margin-bottom: 1rem; display: none; font-weight: bold;">Contraseña incorrecta.</div>
+            <button class="btn btn-success" onclick="checkPassword()" style="width: 100%;">Ingresar</button>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+
+    <script>
+        const ADMIN_PASSWORD = "admin2024";
+        const departamentos = [
+            'Bella Vista', 'Berón de Astrada', 'Capital', 'Concepción', 'Curuzú Cuatiá',
+            'Empedrado', 'Esquina', 'General Alvear', 'General Paz', 'Goya',
+            'Itatí', 'Ituzaingó', 'Lavalle', 'Mburucuyá', 'Mercedes',
+            'Monte Caseros', 'Paso de los Libres', 'Saladas', 'San Cosme',
+            'San Luis del Palmar', 'San Martín', 'San Miguel', 'San Roque', 'Santo Tomé'
+        ];
+
+        let estaciones = []; // MODIFICADO: El array ahora se carga desde el servidor.
+        let map;
+        let markers = [];
+        let isAdminView = false;
+        let departmentAverageSummaryControl;
+
+        // --- NUEVO: Función para guardar todos los datos en el servidor ---
+        async function saveAllDataToServer() {
+            if (!isAdminView) {
+                alert("Debe estar en modo Administrador para guardar cambios.");
+                return false;
+            }
+            try {
+                const response = await fetch('/api/estaciones', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        password: ADMIN_PASSWORD, // Envía la contraseña para autorización
+                        data: estaciones
+                    })
+                });
+
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    throw new Error(`Error del servidor: ${response.status} ${errorText}`);
+                }
+
+                console.log('Datos guardados en el servidor.');
+                document.getElementById('lastUpdate').textContent = getCurrentTimestamp();
+                return true;
+            } catch (error) {
+                console.error('Error al guardar los datos:', error);
+                alert(`No se pudieron guardar los datos: ${error.message}`);
+                return false;
+            }
+        }
+        
+        // --- MODIFICADO: La aplicación ahora se inicia cargando datos desde el servidor ---
+        async function initApp() {
+            try {
+                const response = await fetch('/api/estaciones');
+                if (!response.ok) {
+                    throw new Error('No se pudo conectar con el servidor de datos.');
+                }
+                estaciones = await response.json();
+                
+                // Una vez cargados los datos, inicializamos todo lo demás
+                initMap();
+
+            } catch (error) {
+                console.error("Error al cargar las estaciones:", error);
+                document.getElementById('stationsList').innerHTML = `<div class="error-message">${error.message}</div>`;
+            }
+        }
+        
+        function getCurrentTimestamp() { return new Date().toLocaleString('es-AR', { dateStyle: 'medium', timeStyle: 'short' }); }
+        
+        function formatDatetimeForInput(isoString) {
+            if (!isoString) return new Date().toISOString().slice(0, 16);
+            try {
+                const date = new Date(isoString);
+                const timezoneOffset = date.getTimezoneOffset() * 60000;
+                return new Date(date.getTime() - timezoneOffset).toISOString().slice(0,16);
+            } catch (e) { return new Date().toISOString().slice(0, 16); }
+        }
+
+        function initMap() {
+            map = L.map('map', {
+                preferCanvas: true
+            }).setView([-28.5, -57.8], 8);
+            
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '© OpenStreetMap contributors',
+                crossOrigin: 'anonymous'
+            }).addTo(map);
+            
+            L.Control.DepartmentAverageSummary = L.Control.extend({
+                onAdd: function(map) { this._div = L.DomUtil.create('div', 'info department-average-summary-control'); this.update(); return this._div; },
+                update: function(summaryData) { 
+                    let content = '<h4>Resumen por Departamento</h4>';
+                    if (!summaryData || Object.keys(summaryData).length === 0) { content += '<p class="no-data">No hay datos.</p>'; } 
+                    else {
+                        content += `<table><thead><tr><th>Departamento</th><th>NºEst</th><th>ØPrec.<br>(mm)</th><th>ØAc.Mes<br>(mm)</th><th>ØAc.Año<br>(mm)</th></tr></thead><tbody>`;
+                        const sortedDepartments = Object.keys(summaryData).sort();
+                        for (const deptName of sortedDepartments) {
+                            const data = summaryData[deptName];
+                            content += `<tr><td>${deptName}</td><td>${data.count}</td><td style="color:${getPrecipitationColor(data.avgPrecip)};">${data.avgPrecip.toFixed(1)}</td><td style="color:${getPrecipitationColor(data.avgAcumuladoMes)};">${data.avgAcumuladoMes.toFixed(1)}</td><td style="color:${getPrecipitationColor(data.avgAcumuladoAnio)};">${data.avgAcumuladoAnio.toFixed(1)}</td></tr>`;
+                        }
+                        content += '</tbody></table>';
+                    }
+                    this._div.innerHTML = content;
+                    L.DomEvent.disableScrollPropagation(this._div); L.DomEvent.disableClickPropagation(this._div);
+                }
+            });
+            L.control.departmentAverageSummary = function(opts) { return new L.Control.DepartmentAverageSummary(opts); }
+            departmentAverageSummaryControl = L.control.departmentAverageSummary({ position: 'topright' }).addTo(map);
+
+            loadStations(); fillDepartmentSelectors(); fillStationSelector(); updateStationsList();
+            document.getElementById('dateInput').value = formatDatetimeForInput(new Date().toISOString());
+            document.getElementById('lastUpdate').textContent = getCurrentTimestamp();
+            updateDepartmentAverageSummaryOnMap();
+        }
+
+        function getPrecipitationColor(mm) {
+            if (mm === null || mm === undefined || isNaN(mm)) return '#7f8c8d'; 
+            if (mm <= 10) return '#e74c3c'; 
+            if (mm <= 25) return '#f39c12'; 
+            if (mm <= 50) return '#f1c40f'; 
+            if (mm <= 100) return '#27ae60';
+            return '#3498db'; 
+        }
+
+        function loadStations() {
+            markers.forEach(marker => map.removeLayer(marker)); markers = [];
+            estaciones.forEach(estacion => {
+                const color = getPrecipitationColor(estacion.precipitacion);
+                const marker = L.circleMarker([estacion.lat, estacion.lng], { radius: 8, fillColor: color, color: '#fff', weight: 2, opacity: 1, fillOpacity: 0.9 }).addTo(map);
+                let popupText = `<h4 style="margin:0 0 5px 0;">ID: ${estacion.id} - ${estacion.nombre}</h4><p style="margin:0 0 3px 0;">${estacion.departamento}</p><p style="margin:0;font-size:1.2rem;font-weight:bold;color:${color};">${estacion.precipitacion.toFixed(1)} mm</p>`;
+                if (typeof estacion.acumuladoMes === 'number') { popupText += `<p style="margin:3px 0 0 0;font-size:0.9rem;">Ac. Mes: ${estacion.acumuladoMes.toFixed(1)} mm</p>`; }
+                if (typeof estacion.acumuladoAnio === 'number') { popupText += `<p style="margin:3px 0 0 0;font-size:0.9rem;">Ac. Año: ${estacion.acumuladoAnio.toFixed(1)} mm</p>`; }
+                popupText += `<p style="margin:3px 0 0 0;font-size:0.8rem;">${new Date(estacion.fecha).toLocaleString('es-AR',{dateStyle:'short',timeStyle:'short'})}</p>`;
+                marker.bindPopup(`<div style="padding:0.5rem;">${popupText}</div>`);
+                markers.push(marker);
+            });
+            updateDepartmentAverageSummaryOnMap();
+        }
+
+        function fillDepartmentSelectors(){const newStationDept=document.getElementById('newStationDept');newStationDept.innerHTML='<option value="">Seleccione departamento...</option>';departamentos.sort().forEach(dept=>{newStationDept.innerHTML+=`<option value="${dept}">${dept}</option>`})}
+        function fillStationSelector(){const stationSelect=document.getElementById('stationSelect');stationSelect.innerHTML='<option value="">Seleccione una estación...</option>';const sortedEstaciones=[...estaciones].sort((a,b)=>String(a.id).localeCompare(String(b.id),void 0,{numeric:!0}));sortedEstaciones.forEach(estacion=>{stationSelect.innerHTML+=`<option value="${estacion.id}">${estacion.id} - ${estacion.nombre} (${estacion.departamento})</option>`})}
+        function updateStationsList(){const stationsList=document.getElementById('stationsList');stationsList.innerHTML='';const sortedEstaciones=[...estaciones].sort((a,b)=>String(a.id).localeCompare(String(b.id),void 0,{numeric:!0}));if(0===sortedEstaciones.length)return void(stationsList.innerHTML='<p style="padding:1rem;text-align:center;color:#7f8c8d;">No hay estaciones.</p>');sortedEstaciones.forEach(estacion=>{const div=document.createElement('div');div.className='station-item',div.onclick=()=>{map.setView([estacion.lat,estacion.lng],12),markers.find(m=>m.getLatLng().lat===estacion.lat&&m.getLatLng().lng===estacion.lng)?.openPopup()},div.innerHTML=`<div class="station-info"><div class="station-name">${estacion.id} - ${estacion.nombre}</div><div class="station-dept">${estacion.departamento}</div></div><div class="station-precipitation">${estacion.precipitacion.toFixed(1)} mm</div>`,stationsList.appendChild(div)})}
+
+        // --- MODIFICADO: La carga de Excel ahora actualiza los datos y los envía al servidor ---
+        function handleFileUpload(event){
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const statusDiv = document.getElementById('uploadStatus');
+            statusDiv.innerHTML = '<div class="loading show">Procesando archivo...</div>';
+            
+            const reader = new FileReader();
+            reader.onload = async function(e) {
+                try {
+                    const data = new Uint8Array(e.target.result);
+                    const workbook = XLSX.read(data, {type: 'array', cellDates: true});
+                    const jsonData = XLSX.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]]);
+                    
+                    const result = processExcelData(jsonData); // Procesa los datos localmente
+
+                    if (result.updatedCount > 0) {
+                        // Si hubo cambios, intenta guardarlos en el servidor
+                        const saved = await saveAllDataToServer();
+                        if (saved) {
+                             statusDiv.innerHTML = `<div class="success-message">✅ Archivo procesado y datos guardados:<br>• ${result.updatedCount} estaciones actualizadas.<br>• ${result.idNotFoundCount} IDs no encontrados.<br>• ${result.rowsSkippedNoId} filas sin ID.<br>• ${result.invalidDataCount} datos inválidos.</div>`;
+                             // Refrescar toda la vista
+                             refreshData();
+                        } else {
+                            statusDiv.innerHTML = `<div class="error-message">Error al guardar los datos en el servidor después de procesar el Excel. Los cambios no se han guardado.</div>`;
+                        }
+                    } else {
+                        statusDiv.innerHTML = `<div class="info-message">Archivo procesado, pero no se encontraron datos para actualizar.</div>`;
+                    }
+                } catch (error) {
+                    console.error("Error al procesar el Excel:", error);
+                    statusDiv.innerHTML = `<div class="error-message">Error al leer el archivo Excel: ${error.message}</div>`;
+                } finally {
+                    document.getElementById('excelFile').value = ''; // Limpiar el input
+                }
+            };
+            reader.readAsArrayBuffer(file);
+        }
+        
+        function findValueByKey(obj,keysToFind){const normalizedKeyMap=Object.keys(obj).reduce((acc,key)=>(acc[key.trim().toLowerCase()]=key,acc),{});for(const key of keysToFind){const normalizedKey=key.trim().toLowerCase();if(void 0!==normalizedKeyMap[normalizedKey])return obj[normalizedKeyMap[normalizedKey]]}}
+        
+        // MODIFICADO: Esta función ahora solo modifica el array local `estaciones`. No guarda nada.
+        function processExcelData(data){
+            let updatedCount=0,idNotFoundCount=0,rowsSkippedNoId=0,invalidDataCount=0;data.forEach(row=>{const stationIdFromFile=findValueByKey(row,['id','ID']);if(!stationIdFromFile||''===String(stationIdFromFile).trim())return void rowsSkippedNoId++;const idToUpdate=parseInt(stationIdFromFile);if(isNaN(idToUpdate))return void rowsSkippedNoId++;const existingStation=estaciones.find(e=>e.id===idToUpdate);if(!existingStation)return void idNotFoundCount++;let dataChanged=!1;const precipFromFile=findValueByKey(row,['precipitacion','Precipitacion','mm']);if(void 0!==precipFromFile){const precipValue=parseFloat(String(precipFromFile).replace(',','.'));!isNaN(precipValue)&&precipValue>=0?(existingStation.precipitacion=precipValue,dataChanged=!0):invalidDataCount++}const fechaFromFile=findValueByKey(row,['fecha','Fecha','Timestamp']);if(fechaFromFile)try{let parsedDate;if(fechaFromFile instanceof Date)parsedDate=fechaFromFile;else if('string'==typeof fechaFromFile)parsedDate=new Date(fechaFromFile.replace(/(\d{2})\/(\d{2})\/(\d{4})/,'$2/$1/$3')),isNaN(parsedDate.getTime())&&(parsedDate=new Date(fechaFromFile));else if('number'==typeof fechaFromFile){const dateInfo=XLSX.SSF.parse_date_code(fechaFromFile);dateInfo&&(parsedDate=new Date(dateInfo.y,dateInfo.m-1,dateInfo.d,dateInfo.H||0,dateInfo.M||0,dateInfo.S||0))}parsedDate&&!isNaN(parsedDate.getTime())?(existingStation.fecha=parsedDate.toISOString(),dataChanged=!0):void 0!==precipFromFile&&(existingStation.fecha=(new Date).toISOString(),dataChanged=!0)}catch(e){void 0!==precipFromFile&&(existingStation.fecha=(new Date).toISOString(),dataChanged=!0)}else void 0!==precipFromFile&&(existingStation.fecha=(new Date).toISOString(),dataChanged=!0);const acumMesFromFile=findValueByKey(row,['acumuladomensual','AcumuladoMensual','AcumMes']);if(void 0!==acumMesFromFile){const acumMesValue=parseFloat(String(acumMesFromFile).replace(',','.'));!isNaN(acumMesValue)&&acumMesValue>=0?(existingStation.acumuladoMes=acumMesValue,dataChanged=!0):invalidDataCount++}const acumAnioFromFile=findValueByKey(row,['acumuladoanual','AcumuladoAnual','AcumAnio']);if(void 0!==acumAnioFromFile){const acumAnioValue=parseFloat(String(acumAnioFromFile).replace(',','.'));!isNaN(acumAnioValue)&&acumAnioValue>=0?(existingStation.acumuladoAnio=acumAnioValue,dataChanged=!0):invalidDataCount++}dataChanged&&updatedCount++});
+            return { updatedCount, idNotFoundCount, rowsSkippedNoId, invalidDataCount }; // Devuelve un resumen
+        }
+
+        function calculateDepartmentAverages(){const summary={};if(0===estaciones.length)return summary;return estaciones.forEach(estacion=>{const dept=estacion.departamento;summary[dept]||(summary[dept]={count:0,totalPrecip:0,stationsWithPrecip:0,totalAcumuladoMes:0,stationsWithAcumuladoMes:0,totalAcumuladoAnio:0,stationsWithAcumuladoAnio:0}),summary[dept].count++,'number'==typeof estacion.precipitacion&&!isNaN(estacion.precipitacion)&&(summary[dept].totalPrecip+=estacion.precipitacion,summary[dept].stationsWithPrecip++),'number'==typeof estacion.acumuladoMes&&!isNaN(estacion.acumuladoMes)&&(summary[dept].totalAcumuladoMes+=estacion.acumuladoMes,summary[dept].stationsWithAcumuladoMes++),'number'==typeof estacion.acumuladoAnio&&!isNaN(estacion.acumuladoAnio)&&(summary[dept].totalAcumuladoAnio+=estacion.acumuladoAnio,summary[dept].stationsWithAcumuladoAnio++)}),Object.keys(summary).forEach(dept=>{summary[dept].avgPrecip=summary[dept].stationsWithPrecip>0?summary[dept].totalPrecip/summary[dept].stationsWithPrecip:0,summary[dept].avgAcumuladoMes=summary[dept].stationsWithAcumuladoMes>0?summary[dept].totalAcumuladoMes/summary[dept].stationsWithAcumuladoMes:0,summary[dept].avgAcumuladoAnio=summary[dept].stationsWithAcumuladoAnio>0?summary[dept].totalAcumuladoAnio/summary[dept].stationsWithAcumuladoAnio:0}),summary}
+        function updateDepartmentAverageSummaryOnMap(){if(departmentAverageSummaryControl)departmentAverageSummaryControl.update(calculateDepartmentAverages())}
+        function showDataTable(){document.getElementById('dataTableModal').style.display='block',loadDataTable()}
+        
+        function loadDataTable() {
+            const tbody = document.getElementById('tableBody');
+            tbody.innerHTML = '';
+            const sortedEstaciones = [...estaciones].sort((a, b) => a.id - b.id);
+            const table = document.getElementById('precipitationTable');
+            const headerRow = table.tHead.rows[0];
+
+            document.getElementById('saveTableChangesBtn').style.display = isAdminView ? 'inline-flex' : 'none';
+
+            let headerHTML = `<th>ID</th><th>Estación</th><th>Depto.</th><th>Precip.<br>(mm)</th><th>Fecha Evento</th><th>Lat.</th><th>Lon.</th><th>Ac.Mes<br>(mm)</th><th>Ac.Año<br>(mm)</th>`;
+            if (isAdminView) {
+                headerHTML += `<th>Acciones</th>`;
+            }
+            headerRow.innerHTML = headerHTML;
+
+            if (sortedEstaciones.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="${headerRow.cells.length}" style="text-align:center;">No hay datos.</td></tr>`;
+                return;
+            }
+
+            sortedEstaciones.forEach(estacion => {
+                const originalIndex = estaciones.findIndex(e => e.id === estacion.id);
+                const formatNum = (num) => (typeof num === 'number' && !isNaN(num)) ? num.toFixed(1) : '';
+                const row = document.createElement('tr');
+
+                if (isAdminView) {
+                    row.innerHTML = `
+                        <td>${estacion.id}</td>
+                        <td><input type="text" value="${estacion.nombre}" onchange="updateTableData(${originalIndex}, 'nombre', this.value)"></td>
+                        <td><select onchange="updateTableData(${originalIndex}, 'departamento', this.value)">${departamentos.sort().map(d => `<option value="${d}" ${d === estacion.departamento ? 'selected':''}>${d}</option>`).join('')}</select></td>
+                        <td><input type="number" value="${formatNum(estacion.precipitacion)}" step="0.1" min="0" onchange="updateTableData(${originalIndex}, 'precipitacion', this.value === '' ? null : parseFloat(this.value))"></td>
+                        <td><input type="datetime-local" value="${formatDatetimeForInput(estacion.fecha)}" onchange="updateTableData(${originalIndex}, 'fecha', this.value)"></td>
+                        <td><input type="number" value="${estacion.lat.toFixed(4)}" step="0.0001" onchange="updateTableData(${originalIndex}, 'lat', parseFloat(this.value))"></td>
+                        <td><input type="number" value="${estacion.lng.toFixed(4)}" step="0.0001" onchange="updateTableData(${originalIndex}, 'lng', parseFloat(this.value))"></td>
+                        <td><input type="number" value="${formatNum(estacion.acumuladoMes)}" step="0.1" min="0" placeholder="N/A" onchange="updateTableData(${originalIndex}, 'acumuladoMes', this.value === '' ? null : parseFloat(this.value))"></td>
+                        <td><input type="number" value="${formatNum(estacion.acumuladoAnio)}" step="0.1" min="0" placeholder="N/A" onchange="updateTableData(${originalIndex}, 'acumuladoAnio', this.value === '' ? null : parseFloat(this.value))"></td>
+                        <td><button class="btn btn-danger btn-sm" onclick="deleteStation(${estacion.id})">🗑️</button></td>`;
+                } else {
+                    row.innerHTML = `
+                        <td>${estacion.id}</td>
+                        <td>${estacion.nombre}</td>
+                        <td>${estacion.departamento}</td>
+                        <td>${formatNum(estacion.precipitacion)}</td>
+                        <td>${new Date(estacion.fecha).toLocaleString('es-AR',{dateStyle:'short',timeStyle:'short'})}</td>
+                        <td>${estacion.lat.toFixed(4)}</td>
+                        <td>${estacion.lng.toFixed(4)}</td>
+                        <td>${formatNum(estacion.acumuladoMes)}</td>
+                        <td>${formatNum(estacion.acumuladoAnio)}</td>`;
+                }
+                tbody.appendChild(row);
+            });
+        }
+        
+        function updateTableData(originalIndex,field,value){if(estaciones[originalIndex])if('fecha'===field)try{estaciones[originalIndex][field]=(new Date(value)).toISOString()}catch(e){console.error("Fecha inválida:",value)}else if(['precipitacion','acumuladoMes','acumuladoAnio'].includes(field)){const numValue=parseFloat(value);null===value||''===value?estaciones[originalIndex][field]=null:!isNaN(numValue)&&numValue>=0?estaciones[originalIndex][field]=numValue:(alert("El valor de precipitación debe ser numérico y no negativo."),loadDataTable())}else estaciones[originalIndex][field]=value}
+        
+        // MODIFICADO: Ahora guarda los cambios en el servidor
+        async function deleteStation(id){
+            if (confirm(`¿Está seguro de que desea eliminar la estación ID ${id}? Esta acción es permanente.`)) {
+                estaciones = estaciones.filter(e => e.id !== id);
+                const saved = await saveAllDataToServer();
+                if (saved) {
+                    alert(`Estación ID ${id} eliminada correctamente.`);
+                    refreshData(); // Recarga todo desde el servidor para asegurar consistencia
+                }
+            }
+        }
+        // MODIFICADO: Ahora guarda los cambios en el servidor
+        async function saveTableChanges(){
+            const saved = await saveAllDataToServer();
+            if (saved) {
+                alert('Cambios guardados y reflejados en el servidor.');
+                refreshData();
+            }
+        }
+
+        async function exportToPDF(exportType, buttonElement) {
+            const originalButtonText = buttonElement.innerHTML;
+            buttonElement.disabled = true;
+            buttonElement.innerHTML = '🔄 Generando...';
+
+            try {
+                const { jsPDF } = window.jspdf;
+                const orientation = exportType === 'map' ? 'l' : 'p';
+                const doc = new jsPDF(orientation, 'mm', 'a4');
+                const logoImg = document.getElementById('headerLogo');
+                const logoDataUrl = logoImg.src;
+
+                const addHeader = (docInstance) => {
+                    if (logoImg.complete && logoImg.naturalHeight !== 0) {
+                        const imgWidth = 60; 
+                        const imgHeight = (logoImg.naturalHeight * imgWidth) / logoImg.naturalWidth;
+                        const pageWidth = docInstance.internal.pageSize.getWidth();
+                        
+                        docInstance.addImage(logoDataUrl, 'PNG', 15, 8, imgWidth, imgHeight, undefined, 'FAST');
+                        
+                        docInstance.setFontSize(9);
+                        docInstance.setTextColor(80);
+                        docInstance.text('Ministerio de Producción', pageWidth - 15, 12, { align: 'right' });
+                        docInstance.text('Secretaría de Desarrollo Foresto Industrial', pageWidth - 15, 17, { align: 'right' });
+                        docInstance.text('Dirección de Recursos Forestales', pageWidth - 15, 22, { align: 'right' });
+                    }
+                    docInstance.setLineWidth(0.2);
+                    docInstance.line(15, 28, docInstance.internal.pageSize.getWidth() - 15, 28);
+                };
+
+                if (exportType === 'map') {
+                    addHeader(doc); 
+
+                    const mapElement = document.getElementById('map');
+                    const canvas = await html2canvas(mapElement, { useCORS: true, allowTaint: true });
+                    const mapImgData = canvas.toDataURL('image/png');
+
+                    doc.setFontSize(18);
+                    doc.setTextColor(40);
+                    doc.text('Reporte de Precipitaciones - Mapa de Estaciones', 15, 40);
+                    doc.setFontSize(10);
+                    doc.setTextColor(100);
+                    doc.text(`Generado: ${new Date().toLocaleString('es-AR',{dateStyle:'short',timeStyle:'short'})}`, 15, 47);
+
+                    const imgProps = doc.getImageProperties(mapImgData);
+                    const pdfWidth = doc.internal.pageSize.getWidth() - 30;
+                    const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
+                    
+                    doc.addImage(mapImgData, 'PNG', 15, 55, pdfWidth, pdfHeight, undefined, 'FAST');
+                    doc.save(`reporte_mapa_precipitaciones_${new Date().toISOString().slice(0,10)}.pdf`);
+
+                } else if (exportType === 'table') {
+                    const head = [['ID', 'Estación', 'Depto.', 'Precip. (mm)', 'Fecha', 'Ac. Mes', 'Ac. Año']];
+                    const body = estaciones.map(e => [
+                        e.id,
+                        e.nombre,
+                        e.departamento,
+                        (typeof e.precipitacion === 'number') ? e.precipitacion.toFixed(1) : 'N/A',
+                        new Date(e.fecha).toLocaleString('es-AR',{dateStyle:'short',timeStyle:'short'}),
+                        (typeof e.acumuladoMes === 'number') ? e.acumuladoMes.toFixed(1) : 'N/A',
+                        (typeof e.acumuladoAnio === 'number') ? e.acumuladoAnio.toFixed(1) : 'N/A',
+                    ]);
+
+                    doc.autoTable({
+                        head: head,
+                        body: body,
+                        startY: 45, 
+                        margin: { top: 40 },
+                        didDrawPage: function (data) {
+                            addHeader(doc);
+                            if (data.pageNumber === 1) {
+                                doc.setFontSize(18);
+                                doc.setTextColor(40);
+                                doc.text('Reporte de Precipitaciones - Tabla de Datos', 15, 38);
+                            }
+                        },
+                        styles: { fontSize: 8, cellPadding: 1.5 },
+                        headStyles: { fillColor: [44, 62, 80], halign: 'center' },
+                        columnStyles: {
+                            3: { halign: 'right' },
+                            5: { halign: 'right' },
+                            6: { halign: 'right' },
+                        }
+                    });
+                    doc.save(`reporte_tabla_precipitaciones_${new Date().toISOString().slice(0,10)}.pdf`);
+                }
+
+            } catch (error) {
+                console.error("Error al generar el PDF:", error);
+                alert("Hubo un error al generar el PDF. Revise la consola para más detalles.");
+            } finally {
+                buttonElement.disabled = false;
+                buttonElement.innerHTML = originalButtonText;
+            }
+        }
+        
+        function toggleView() {
+            if (isAdminView) {
+                isAdminView = false;
+                document.getElementById('publicView').style.display = 'block';
+                document.getElementById('adminView').style.display = 'none';
+                document.getElementById('viewToggleText').innerHTML = '⚙️ Vista Admin';
+                document.getElementById('sidebar').style.width = '350px';
+                loadDataTable(); // Recargar la tabla en modo público
+            } else {
+                document.getElementById('passwordInput').value = '';
+                document.getElementById('passwordError').style.display = 'none';
+                document.getElementById('passwordModal').style.display = 'block';
+                document.getElementById('passwordInput').focus();
+            }
+        }
+
+        function checkPassword() {
+            const passwordInput = document.getElementById('passwordInput');
+            const passwordError = document.getElementById('passwordError');
+            
+            if (passwordInput.value === ADMIN_PASSWORD) {
+                isAdminView = true;
+                document.getElementById('publicView').style.display = 'none';
+                document.getElementById('adminView').style.display = 'block';
+                document.getElementById('viewToggleText').innerHTML = '👁️ Vista Pública';
+                document.getElementById('sidebar').style.width = '380px';
+                passwordInput.value = '';
+                passwordError.style.display = 'none';
+                closeModal('passwordModal');
+                loadDataTable(); // Recargar la tabla en modo admin
+            } else {
+                passwordError.style.display = 'block';
+                passwordInput.value = '';
+                passwordInput.focus();
+            }
+        }
+
+        // MODIFICADO: Ahora guarda los cambios en el servidor
+        async function updatePrecipitation() {
+            const stationId = parseInt(document.getElementById('stationSelect').value);
+            const precipitation = parseFloat(document.getElementById('precipitationInput').value);
+            const dateValue = document.getElementById('dateInput').value;
+
+            if (!stationId || isNaN(precipitation) || !dateValue) {
+                return alert('Por favor, complete todos los campos: Estación, Precipitación y Fecha.');
+            }
+            if (precipitation < 0) {
+                return alert('El valor de la precipitación no puede ser negativo.');
+            }
+
+            const station = estaciones.find(e => e.id === stationId);
+            if (station) {
+                station.precipitacion = precipitation;
+                station.fecha = new Date(dateValue).toISOString();
+                
+                const saved = await saveAllDataToServer();
+                if (saved) {
+                    alert(`Precipitación de la estación ID ${stationId} actualizada y guardada.`);
+                    refreshData();
+                    document.getElementById('precipitationInput').value = '';
+                    document.getElementById('stationSelect').value = '';
+                    document.getElementById('dateInput').value = formatDatetimeForInput(new Date().toISOString());
+                }
+            } else {
+                alert(`Estación con ID ${stationId} no encontrada.`);
+            }
+        }
+
+        function addNewStation(){
+            document.getElementById('newStationId').value = '';
+            document.getElementById('newStationName').value = '';
+            document.getElementById('newStationDept').value = '';
+            document.getElementById('newStationLat').value = '';
+            document.getElementById('newStationLng').value = '';
+            document.getElementById('newStationModal').style.display = 'block';
+        }
+        function closeModal(modalId){document.getElementById(modalId).style.display='none'}
+        
+        // MODIFICADO: Ahora guarda los cambios en el servidor
+        async function saveNewStation(){
+            const id = parseInt(document.getElementById('newStationId').value);
+            const nombre = document.getElementById('newStationName').value.trim();
+            const departamento = document.getElementById('newStationDept').value;
+            const lat = parseFloat(document.getElementById('newStationLat').value);
+            const lng = parseFloat(document.getElementById('newStationLng').value);
+
+            if (isNaN(id) || !nombre || !departamento || isNaN(lat) || isNaN(lng) || id <= 0) {
+                return alert('Por favor, complete todos los campos correctamente. El ID debe ser un número positivo.');
+            }
+            if (estaciones.some(e => e.id === id)) {
+                return alert(`El ID de estación ${id} ya existe. Por favor, elija otro.`);
+            }
+
+            const newStation = {id, nombre, departamento, lat, lng, precipitacion: 0, fecha: new Date().toISOString(), acumuladoMes: null, acumuladoAnio: null};
+            estaciones.push(newStation);
+            
+            const saved = await saveAllDataToServer();
+            if (saved) {
+                alert(`Nueva estación "${nombre}" (ID: ${id}) agregada y guardada.`);
+                closeModal('newStationModal');
+                refreshData();
+            }
+        }
+        
+        // MODIFICADO: Recarga los datos desde el servidor.
+        async function refreshData() {
+            console.log("Recargando datos desde el servidor...");
+            await initApp();
+            alert('Datos actualizados desde el servidor.');
+        }
+
+        function exportData(){if(0!==estaciones.length){const formatNumCSV=num=>'number'==typeof num&&!isNaN(num)?num.toFixed(1):'',dataToExport=estaciones.map(e=>({ID:e.id,Estacion:e.nombre,Departamento:e.departamento,Precipitacion_mm:formatNumCSV(e.precipitacion),Fecha_Evento:(new Date(e.fecha)).toLocaleString('es-AR',{dateStyle:'short',timeStyle:'short'}),Latitud:e.lat.toFixed(4),Longitud:e.lng.toFixed(4),AcumuladoMensual_mm:formatNumCSV(e.acumuladoMes),AcumuladoAnual_mm:formatNumCSV(e.acumuladoAnio)})),csvHeader=Object.keys(dataToExport[0]).join(','),csvRows=dataToExport.map(row=>Object.values(row).map(val=>`"${String(val).replace(/"/g,'""')}"`).join(',')),csvContent=`${csvHeader}\n${csvRows.join('\n')}`,blob=new Blob(['\uFEFF'+csvContent],{type:'text/csv;charset=utf-8;'});if(void 0!==link.download){const url=URL.createObjectURL(blob);link.setAttribute('href',url),link.setAttribute('download',`precipitaciones_corrientes_${(new Date).toISOString().slice(0,10)}.csv`),link.style.visibility='hidden',document.body.appendChild(link),link.click(),document.body.removeChild(link),URL.revokeObjectURL(url)}var link=document.createElement('a')}else alert("No hay datos para exportar.")}
+        
+        window.onclick = function(event) { ['newStationModal','dataTableModal','passwordModal'].forEach(mId => { const modal=document.getElementById(mId); if(modal && event.target===modal) closeModal(mId);}); }
+        
+        // MODIFICADO: Se cambia window.onload para llamar a la nueva función de inicio.
+        window.onload = initApp;
+    </script>
+</body>
+</html>
